@@ -4,6 +4,9 @@ Nodex is a smart wallet tracker for Solana. It follows a set of top-performing t
 and shows what they are buying, how each wallet has performed, and whether a token is safe to
 follow them into.
 
+> **Note:** Nodex currently runs on simulated data. Every wallet, trade, token and price is
+> synthetic and generated locally, and the app makes no network calls. See [Data](#data).
+
 - **See what smart money is buying.** Tokens the tracked wallets are net buying, ranked by how
   many of them are in.
 - **Judge a wallet by its record.** Profit, win rate, volume and every position, for any period.
