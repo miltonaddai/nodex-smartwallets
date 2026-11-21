@@ -1,0 +1,16 @@
+{
+  "name": "nodex-root",
+  "private": true,
+  "license": "MIT",
+  "description": "Root runner for the offline Nodex frontend and backend",
+  "scripts": {
+    "postinstall": "npm install --prefix backend && npm install --prefix frontend",
+    "setup": "npm install",
+    "dev": "concurrently -k -n api,web -c cyan,magenta \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "start": "npm install && npm run dev",
+    "test": "npm test --prefix backend && npm test --prefix frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
