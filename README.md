@@ -1,67 +1,160 @@
-# Nodex (offline sandbox build)
+# Nodex
 
-A smart-money analytics dashboard for Solana: smart wallets, what top traders are buying,
-insider-bundled launches, a token risk scanner, watchlists and saved filters.
+Nodex is a smart wallet tracker for Solana. It follows a set of top-performing trading wallets
+and shows what they are buying, how each wallet has performed, and whether a token is safe to
+follow them into.
 
-**This build is fully offline and uses only synthetic data.**
+- **See what smart money is buying.** Tokens the tracked wallets are net buying, ranked by how
+  many of them are in.
+- **Judge a wallet by its record.** Profit, win rate, volume and every position, for any period.
+- **Spot fake "whales".** Launches bought by one person through many linked wallets.
+- **Check a token before you buy.** A risk scan with a buy-or-avoid verdict.
+- **Follow the wallets you trust.** A watchlist of wallets and tokens.
 
-- No real people, wallets, trades, token data or images. Every dataset is generated in memory
-  from a fixed seed by [backend/src/data/fixtures.ts](backend/src/data/fixtures.ts).
-- No external services: no hosted database, no blockchain or market-data APIs, no analytics.
-  The API makes no outbound network calls.
-- No secrets or API keys are needed or read.
-- No accounts or logins. There is one local user: the watchlist and saved filters live in the
-  API process's memory and reset on restart.
+There are no accounts: every page works as soon as the app is open.
 
-## Architecture
+## Features
+
+### Smart Wallets (`/wallets`)
+
+**Tokens being bought** lists every token the tracked wallets are net buying over the buy
+window (72 hours by default). Tokens are ranked by how many tracked wallets are in them, with
+ties going to the wallets with the larger 30-day PnL. Each row shows:
+
+- market cap
+- net amount bought
+- 24h price change
+- the time of the latest buy
+- when Nodex first saw the token
+- its peak price since then, as a multiple
+
+A row expands to show which wallets bought and how much.
+
+The table can be narrowed with:
+
+- a maximum market cap
+- a minimum number of buying wallets
+- a **custom filter** built from any of the table's fields, such as "top traders buying ≥ 3"
+  and "sold under 30% of what they bought". Custom filters can be named and saved, and show
+  up as one-click chips.
+
+**Tracked wallets** lists the traders being followed, with their rank, 30-day PnL and volume.
+
+### Wallet profile (`/wallets/:address`)
+
+A single wallet's performance over 24 hours, 7 days, 30 days or all time:
+
+- profit, realized and unrealized PnL
+- win rate
+- trading volume and trade count
+- the number of early ("alpha") token entries
+
+Below that, every token position with its entry, size, PnL and ROI, plus any concentration or
+suspicious-activity flags. A wallet can be added to the watchlist from here.
+
+### Insider plays (`/insiders`)
+
+Launches where one person appears to have bought through several wallets. The evidence:
+
+- wallets that co-signed the same buy
+- wallets funded by the same private wallet
+- bags split into fresh wallets
+- identical buys landing in the same slot
+
+Each play shows how much of the supply the linked wallets acquired, how much they still hold,
+whether they are holding or distributing, and the shape of the price since launch.
+
+### Token scanner (`/scanner`)
+
+Paste a Solana token address to get a verdict (**avoid**, **caution** or **favorable**) and a
+0–100 risk score. The scan checks:
+
+- **Liquidity:** liquidity, and market cap against liquidity
+- **Token controls:** mint, freeze and transfer-fee authorities, and permanent delegates
+- **Holders:** how concentrated the supply is, with the top holders listed
+- **Trading:** bot-farm patterns
+- **Launch:** launch bundles
+- **Smart money:** which tracked wallets hold the token
+
+Any critical finding means avoid. Recent scans are kept in the browser and reopen instantly.
+
+### Watchlist (`/watchlist`)
+
+The wallets and tokens you follow. Wallets show 7-day PnL, win rate and last activity, and can
+be renamed or removed. Tokens show live price, market cap and 24h change.
+
+### Settings (`/settings`)
+
+Light or dark theme.
+
+## How it works
 
 ```text
 React/Vite client  ──/api proxy──>  Express API (localhost:3001)
                                         │
-                                        ├─ src/data/fixtures.ts   synthetic, seeded dataset (starting state)
-                                        ├─ src/workers/*          simulated pipeline, mutates the dataset on a timer
-                                        ├─ src/lib/*              scoring, risk, filtering logic (pure, tested)
-                                        └─ src/services/*         in-memory watchlists, filters
+                                        ├─ src/workers/*    pipeline that refreshes the data on a timer
+                                        ├─ src/lib/*        scoring, insider detection, risk and filter logic
+                                        ├─ src/services/*   watchlists, saved filters, the scanner
+                                        └─ src/data/*       the dataset the pipeline works on
 ```
 
-### Simulated worker
+The heart of Nodex is a set of pure functions in [backend/src/lib](backend/src/lib):
 
-The original app had a background worker that pulled market data, trader swaps and launch
-transactions from external providers. Here that worker is simulated:
-[backend/src/workers/pipeline.ts](backend/src/workers/pipeline.ts) runs the same stages as local
-random processes over the synthetic data.
-
-| Step | What it simulates |
+| Module | What it does |
 | --- | --- |
-| `market-health` | Prices random-walk, liquidity follows, and a few pools are pulled (rugs) |
-| `discovery` | New launches are listed; rugged and aged-out tokens are dropped |
-| `smart-money` | Tracked traders open, add to and trim positions; new tokens enter the list |
-| `insiders` | Insiders distribute; new bundled launches are analyzed |
-| `wallets` | Smart-wallet profit, win rate and activity drift |
-| `sightings` | First-seen and peak-since figures advance (using `lib/sightings`) |
+| `alpha-scoring` | Builds each wallet's per-token performance from its trades, then scores the wallet on profit, win rate, entry timing and suspicious activity |
+| `smart-money` | Works out which tokens each wallet is net buying and ranks tokens by how many tracked wallets are in |
+| `insider-detection` | Scores a launch for common control (co-signed buys, shared private funders, split bags, same-slot buy waves) and tracks whether the insiders still hold |
+| `token-risk` | Turns a token's facts into risk flags, positives, a 0–100 score and a verdict |
+| `sightings` | Records when a token was first seen and its peak since, ignoring readings that look spoofed |
+| `custom-filters`, `sort-rows` | The rules behind custom filters and the table sorting |
 
-The API runs it in-process every `WORKER_INTERVAL_SECONDS` (default 60; the first run is 5 s
-after start). It has to run inside the API because the data lives in the API's memory. Each
-run's steps are logged with a `[worker]` prefix, and `GET /api/health` reports the pipeline
-status. Runs are deterministic for a given `FIXTURE_SEED` and run number.
+A background **pipeline** ([backend/src/workers/pipeline.ts](backend/src/workers/pipeline.ts))
+keeps the data moving. It runs inside the API every `WORKER_INTERVAL_SECONDS` (default 60; the
+first run is 5 seconds after start):
 
-`npm run worker --prefix backend -- --runs 10` runs the pipeline standalone and prints what
-each run did. It works on its own copy of the data, so it doesn't affect a running API.
+| Step | What it does |
+| --- | --- |
+| `market-health` | Updates prices and liquidity; pools that are pulled count as rugs |
+| `discovery` | Lists new launches and drops rugged or aged-out tokens |
+| `smart-money` | Tracked wallets open, add to and trim positions |
+| `insiders` | Linked wallets distribute; new bundled launches are analyzed |
+| `wallets` | Wallet profit, win rate and activity update |
+| `sightings` | First-seen and peak-since figures advance |
+
+Each run's steps are logged with a `[worker]` prefix, and `GET /api/health` reports the
+pipeline status. `npm run worker --prefix backend -- --runs 10` runs the pipeline on its own
+and prints what each run did, without touching a running API.
+
+## Data
+
+This version of Nodex runs fully offline on **synthetic sample data**:
+
+- **Generated data:** every wallet, trade, token and price is generated from a fixed seed by
+  [backend/src/data/fixtures.ts](backend/src/data/fixtures.ts). None of it belongs to real
+  people, wallets or tokens.
+- **Simulated pipeline:** the pipeline simulates market and trading activity on that data
+  instead of fetching it.
+- **Nothing external:** there are no external services, API keys or outbound network calls.
+- **In memory:** watchlists and saved filters live in the API's memory and reset when it
+  restarts.
+
+The same `FIXTURE_SEED` always produces the same starting data and the same pipeline runs.
 
 ## Running
 
-Requires Node 22. After dependencies are installed, nothing needs network access.
+Requires Node 22.18 or newer. After dependencies are installed, nothing needs network access.
 
 ```bash
 npm install        # root; also installs backend/ and frontend/
 npm run dev        # API on :3001, web app on :5173
 ```
 
-Open http://localhost:5173. There is nothing to sign in to; every page works straight away.
+Open http://localhost:5173.
 
-### Tests and checks
+## Tests
 
-All tests run offline with Node's built-in test runner; nothing extra to install.
+All tests use Node's built-in test runner; there is nothing extra to install.
 
 ```bash
 npm test                           # everything: backend, then frontend
@@ -82,8 +175,8 @@ cd frontend && node --test tests/scan-history.test.ts
 | Suite | Covers |
 | --- | --- |
 | `backend/src/lib/*.test.ts` | Wallet scoring, insider detection, token risk rules, smart-money aggregation, custom filters, sorting, price tracking |
-| `backend/src/data/fixtures.test.ts` | The synthetic dataset is deterministic and well-formed |
-| `backend/src/workers/pipeline.test.ts` | 50 simulated pipeline runs keep the data consistent |
+| `backend/src/data/fixtures.test.ts` | The dataset is deterministic and well-formed |
+| `backend/src/workers/pipeline.test.ts` | 50 pipeline runs keep the data consistent |
 | `backend/src/routes/api.test.ts` | Every endpoint over HTTP: wallets, buys and their filters, scanner, insiders, watchlists, saved filters, and error cases |
 | `frontend/tests/*.test.ts` | Filter value parsing and formatting, saved filters and scan history in browser storage, money and address formatting, chain links |
 
@@ -95,43 +188,44 @@ All optional. See [backend/.env.example](backend/.env.example) and
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `PORT` | `3001` | API port |
-| `FIXTURE_SEED` | `1337` | Seed for the synthetic dataset |
-| `WORKER_ENABLED` | `true` | Run the simulated pipeline (`false` keeps the data static) |
+| `FIXTURE_SEED` | `1337` | Seed for the dataset |
+| `WORKER_ENABLED` | `true` | Run the pipeline (`false` keeps the data static) |
 | `WORKER_INTERVAL_SECONDS` | `60` | Time between pipeline runs (minimum 5) |
-| `SMART_MONEY_BUY_WINDOW_HOURS` | `72` | Window described on the smart-money table |
+| `SMART_MONEY_BUY_WINDOW_HOURS` | `72` | Buy window shown on the Smart Wallets table |
 
 ## API
-
-No endpoint needs authentication.
 
 | Route | Description |
 | --- | --- |
 | `GET /api/health` | Health check and pipeline status |
-| `GET /api/wallets/top`, `/api/wallets/:address` | Smart wallets and per-wallet analysis |
-| `GET /api/tokens/top` | Token rankings |
-| `GET /api/smart-money/buys`, `/wallets` | Tokens tracked traders are buying, and the traders |
+| `GET /api/wallets/top`, `/api/wallets/:address` | Ranked wallets and a single wallet's profile |
+| `GET /api/smart-money/buys`, `/wallets` | Tokens the tracked wallets are buying, and the wallets |
 | `GET /api/insiders` | Launches bought by linked wallets |
 | `GET /api/scanner/:chain/:address[/bundle]` | Token risk scan with verdict |
-| `/api/watchlist`, `/api/filters` | Watchlist and saved filters (in memory) |
+| `GET /api/tokens/top` | Token rankings |
+| `/api/watchlist`, `/api/watchlist/tokens`, `/api/filters` | Watchlists and saved filters |
 
 List endpoints accept `page`, `pageSize`, `sortBy`, `sortOrder` and numeric `min*`/`max*`
-filters. The scanner accepts any well-formed address: listed fixture tokens are scanned with
-their figures, anything else gets a reproducible synthetic token seeded from the address.
+filters. No endpoint needs authentication.
 
 ## Project layout
 
 ```text
 backend/
-  src/config/        local config (no secrets)
-  src/data/          synthetic dataset generator + tests
-  src/workers/       simulated pipeline, scheduler and standalone runner + tests
-  src/lib/           pure scoring, risk, filter and sorting logic + tests
+  src/config/        configuration
+  src/data/          dataset generator + tests
+  src/workers/       pipeline, scheduler and standalone runner + tests
+  src/lib/           scoring, insider detection, risk, filter and sorting logic + tests
   src/routes/        HTTP routes + API tests
-  src/services/      in-memory stores and the fixture-backed scanner
+  src/services/      watchlists, saved filters and the token scanner
 frontend/
-  src/pages/         dashboard pages
+  src/pages/         app pages
   src/components/    UI
   src/stores/        zustand stores
-  src/lib/api.ts     API client
-  tests/             frontend unit tests (node --test)
+  src/lib/           API client and helpers
+  tests/             frontend unit tests
 ```
+
+## License
+
+MIT. See [LICENSE](LICENSE).
