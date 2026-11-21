@@ -6,7 +6,6 @@ import { PageLayout } from '@/components/layout/PageLayout'
 import { Seo } from '@/components/Seo'
 import { Navbar } from '@/components/layout/Navbar'
 import { BrandLogo } from '@/components/layout/BrandLogo'
-import { XLink } from '@/components/layout/SocialLinks'
 import { RisingBars, SignalField } from '@/components/landing/canvas'
 import { StoryScroll } from '@/components/landing/StoryScroll'
 import { Crosshairs, ProductWindow, Rule } from '@/components/landing/visuals'
@@ -158,7 +157,7 @@ function LandingFooter() {
             Find the most profitable wallets on Solana and follow every move they make.
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-x-16 gap-y-10 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-x-16 gap-y-10">
           {columns.map((column) => (
             <div key={column.title}>
               <div className="mb-3 text-sm text-[#ffffff]/55">{column.title}</div>
@@ -173,10 +172,6 @@ function LandingFooter() {
               </ul>
             </div>
           ))}
-          <div>
-            <div className="mb-3 text-sm text-[#ffffff]/55">Follow</div>
-            <XLink className="text-sm font-medium" withHandle />
-          </div>
         </div>
       </div>
       <div className="mx-auto mt-16 flex max-w-7xl items-center justify-between gap-4 px-4 text-xs text-[#ffffff]/60 md:px-8">

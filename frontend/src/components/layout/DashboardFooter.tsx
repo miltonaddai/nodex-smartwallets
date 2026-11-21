@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { BrandLogo } from '@/components/layout/BrandLogo'
-import { XLink } from '@/components/layout/SocialLinks'
 
 const links = [
   { label: 'Smart Wallets', to: '/wallets' },
@@ -23,10 +22,7 @@ export function DashboardFooter() {
             </Link>
           ))}
         </div>
-        <div className="flex items-center gap-5">
-          <XLink className="hover:text-nodex-teal hover:opacity-100" withHandle />
-          <span>© {new Date().getFullYear()} Nodex</span>
-        </div>
+        <span>© {new Date().getFullYear()} Nodex</span>
       </div>
     </footer>
   )

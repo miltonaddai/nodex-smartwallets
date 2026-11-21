@@ -1,7 +1,6 @@
 import { type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { BrandLogo } from '@/components/layout/BrandLogo'
-import { XLink } from '@/components/layout/SocialLinks'
 
 const linkClass = 'transition-colors hover:text-nodex-teal'
 
@@ -24,10 +23,7 @@ export function PublicFooter({ links }: { links?: ReactNode }) {
             </>
           )}
         </div>
-        <div className="flex items-center gap-5">
-          <XLink className="text-nodex-muted hover:text-nodex-teal hover:opacity-100" withHandle />
-          <span>© {new Date().getFullYear()} Nodex</span>
-        </div>
+        <span>© {new Date().getFullYear()} Nodex</span>
       </div>
     </footer>
   )
