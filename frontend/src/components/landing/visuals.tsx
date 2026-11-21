@@ -2,29 +2,30 @@ import { motion } from 'framer-motion'
 import { Check, TriangleAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-/** Well-known Solana tokens for the product mocks. Logos live in public/tokens. Figures are samples. */
+/** Tokens for the product mocks. Figures are samples. */
 export const TOKENS = {
-  pengu: { symbol: 'PENGU', name: 'Pudgy Penguins', logo: '/tokens/pengu.png' },
-  wif: { symbol: 'WIF', name: 'dogwifhat', logo: '/tokens/wif.jpg' },
-  moodeng: { symbol: 'MOODENG', name: 'Moo Deng', logo: '/tokens/moodeng.jpg' },
-  popcat: { symbol: 'POPCAT', name: 'Popcat', logo: '/tokens/popcat.jpg' },
-  bonk: { symbol: 'BONK', name: 'Bonk', logo: '/tokens/bonk.jpg' },
-  jup: { symbol: 'JUP', name: 'Jupiter', logo: '/tokens/jup.png' },
+  pengu: { symbol: 'PENGU', name: 'Pudgy Penguins' },
+  wif: { symbol: 'WIF', name: 'dogwifhat' },
+  moodeng: { symbol: 'MOODENG', name: 'Moo Deng' },
+  popcat: { symbol: 'POPCAT', name: 'Popcat' },
+  bonk: { symbol: 'BONK', name: 'Bonk' },
+  jup: { symbol: 'JUP', name: 'Jupiter' },
 } as const
 
 type TokenKey = keyof typeof TOKENS
 
 export function TokenLogo({ token, className }: { token: TokenKey; className?: string }) {
-  const { logo, symbol } = TOKENS[token]
+  const { symbol } = TOKENS[token]
   return (
-    <img
-      src={logo}
-      alt={`${symbol} logo`}
-      width={64}
-      height={64}
-      loading="lazy"
-      className={cn('shrink-0 rounded-full object-cover ring-1 ring-nodex-line', className)}
-    />
+    <span
+      aria-hidden
+      className={cn(
+        'flex shrink-0 items-center justify-center rounded-full bg-nodex-raised text-xs font-bold text-nodex-teal ring-1 ring-nodex-line',
+        className
+      )}
+    >
+      {symbol.charAt(0)}
+    </span>
   )
 }
 

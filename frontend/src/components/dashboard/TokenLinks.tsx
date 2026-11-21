@@ -11,27 +11,26 @@ interface App {
   id: string
   name: string
   note: string
-  icon: string
   url: string
 }
 
 /**
  * Where a token can be opened. Pump.fun, Axiom and Jupiter only take Solana mints in these URLs, so other
- * chains get FOMO and Dexscreener. Icons live in public/apps.
+ * chains get FOMO and Dexscreener. Each app is shown as a lettered disc, not its logo.
  */
 function appsFor(chain: string, contract: string): App[] {
   const apps: App[] = [
-    { id: 'fomo', name: 'FOMO', note: 'Social trading', icon: '/apps/fomo.png', url: `https://fomo.family/tokens/${chain}/${contract}` },
+    { id: 'fomo', name: 'FOMO', note: 'Social trading', url: `https://fomo.family/tokens/${chain}/${contract}` },
   ]
   const solana = chain === 'solana'
   if (solana) {
-    apps.push({ id: 'jupiter', name: 'Jupiter', note: 'Swap aggregator', icon: '/apps/jupiter.png', url: `https://jup.ag/tokens/${contract}` })
+    apps.push({ id: 'jupiter', name: 'Jupiter', note: 'Swap aggregator', url: `https://jup.ag/tokens/${contract}` })
   }
-  apps.push({ id: 'dexscreener', name: 'Dexscreener', note: 'Charts and pairs', icon: '/apps/dexscreener.png', url: tokenUrl(chain, contract) })
+  apps.push({ id: 'dexscreener', name: 'Dexscreener', note: 'Charts and pairs', url: tokenUrl(chain, contract) })
   if (solana) {
     apps.push(
-      { id: 'axiom', name: 'Axiom', note: 'Trading terminal', icon: '/apps/axiom.png', url: `https://axiom.trade/token/${contract}` },
-      { id: 'pump', name: 'Pump.fun', note: 'Launchpad', icon: '/apps/pump.png', url: `https://pump.fun/coin/${contract}` }
+      { id: 'axiom', name: 'Axiom', note: 'Trading terminal', url: `https://axiom.trade/token/${contract}` },
+      { id: 'pump', name: 'Pump.fun', note: 'Launchpad', url: `https://pump.fun/coin/${contract}` }
     )
   }
   return apps
@@ -219,13 +218,12 @@ export function TokenLinks({
                       style={{ left: TOKEN_X + dx - ICON / 2, top: TOKEN_Y + dy - ICON / 2 }}
                       className="group absolute flex items-center gap-3 pr-2"
                     >
-                      <img
-                        src={app.icon}
-                        alt=""
-                        width={ICON}
-                        height={ICON}
-                        className="h-[34px] w-[34px] shrink-0 rounded-full object-cover ring-2 ring-nodex-line transition-all duration-200 group-hover:scale-110 group-hover:ring-nodex-teal"
-                      />
+                      <span
+                        aria-hidden
+                        className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-nodex-raised text-sm font-bold text-nodex-foreground ring-2 ring-nodex-line transition-all duration-200 group-hover:scale-110 group-hover:ring-nodex-teal"
+                      >
+                        {app.name.charAt(0)}
+                      </span>
                       <span className="whitespace-nowrap">
                         <span className="block text-sm font-semibold text-nodex-foreground transition-colors group-hover:text-nodex-teal">
                           {app.name}
