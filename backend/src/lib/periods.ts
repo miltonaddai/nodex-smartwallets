@@ -6,9 +6,9 @@ export interface PeriodConfig {
   days: number
   birdeyeWalletType: 'today' | '1W' | '30d' | '90d'
   birdeyePnlDuration: '24h' | '7d' | '30d' | '90d' | 'all'
-  tokenSortBy: string
-  tokenChangeField: string
-  tokenVolumeField: string
+  sortBy: string
+  changeField: string
+  volumeField: string
 }
 
 export const PERIOD_CONFIG: Record<PeriodLabel, PeriodConfig> = {
@@ -18,36 +18,36 @@ export const PERIOD_CONFIG: Record<PeriodLabel, PeriodConfig> = {
     birdeyeWalletType: 'today',
     birdeyePnlDuration: '24h',
     // Fetch by volume — sort_by=mc returns manipulated tokens with fake MC and ~$0 liquidity.
-    tokenSortBy: 'v24hUSD',
-    tokenChangeField: 'v24hChangePercent',
-    tokenVolumeField: 'volume24h',
+    sortBy: 'v24hUSD',
+    changeField: 'v24hChangePercent',
+    volumeField: 'volume24h',
   },
   '7D': {
     label: '7D',
     days: 7,
     birdeyeWalletType: '1W',
     birdeyePnlDuration: '7d',
-    tokenSortBy: 'v24hUSD',
-    tokenChangeField: 'priceChange7d',
-    tokenVolumeField: 'volume24h',
+    sortBy: 'v24hUSD',
+    changeField: 'priceChange7d',
+    volumeField: 'volume24h',
   },
   '30D': {
     label: '30D',
     days: 30,
     birdeyeWalletType: '30d',
     birdeyePnlDuration: '30d',
-    tokenSortBy: 'v24hUSD',
-    tokenChangeField: 'priceChange30d',
-    tokenVolumeField: 'volume24h',
+    sortBy: 'v24hUSD',
+    changeField: 'priceChange30d',
+    volumeField: 'volume24h',
   },
   All: {
     label: 'All',
     days: 365,
     birdeyeWalletType: '90d',
     birdeyePnlDuration: 'all',
-    tokenSortBy: 'v24hUSD',
-    tokenChangeField: 'priceChange30d',
-    tokenVolumeField: 'volume24h',
+    sortBy: 'v24hUSD',
+    changeField: 'priceChange30d',
+    volumeField: 'volume24h',
   },
 }
 
